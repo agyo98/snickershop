@@ -29,21 +29,24 @@ export default function Navbar() {
               <div className="text-gray-500 text-sm">로딩 중...</div>
             ) : user ? (
               <>
-                <Link href="/product/new">
-                  <button className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    상품등록
-                  </button>
+                <Link
+                  href="/product/new"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  상품등록
                 </Link>
-                <Link href="/cart" className="relative">
-                  <button className="text-gray-700 hover:text-gray-900 p-2 rounded-md">
-                    <ShoppingCart className="w-5 h-5" />
-                  </button>
+                <Link
+                  href="/cart"
+                  className="relative text-gray-700 hover:text-gray-900 p-2 rounded-md"
+                >
+                  <ShoppingCart className="w-5 h-5" />
                 </Link>
-                <Link href="/profile">
-                  <button className="text-gray-700 hover:text-gray-900 p-2 rounded-md">
-                    <User className="w-5 h-5" />
-                  </button>
+                <Link
+                  href="/profile"
+                  className="text-gray-700 hover:text-gray-900 p-2 rounded-md"
+                >
+                  <User className="w-5 h-5" />
                 </Link>
                 <button
                   onClick={logout}
@@ -55,15 +58,17 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/login">
-                  <button className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                    로그인
-                  </button>
+                <Link
+                  href="/login"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  로그인
                 </Link>
-                <Link href="/signup">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                    회원가입
-                  </button>
+                <Link
+                  href="/signup"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  회원가입
                 </Link>
               </>
             )}
@@ -88,23 +93,29 @@ export default function Navbar() {
                 <div className="text-gray-500 text-sm py-2">로딩 중...</div>
               ) : user ? (
                 <>
-                  <Link href="/product/new" onClick={() => setIsMenuOpen(false)}>
-                    <button className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
-                      상품등록
-                    </button>
+                  <Link
+                    href="/product/new"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    상품등록
                   </Link>
-                  <Link href="/cart" onClick={() => setIsMenuOpen(false)}>
-                    <button className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md flex items-center gap-2">
-                      <ShoppingCart className="w-4 h-4" />
-                      장바구니
-                    </button>
+                  <Link
+                    href="/cart"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md flex items-center gap-2"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    장바구니
                   </Link>
-                  <Link href="/profile" onClick={() => setIsMenuOpen(false)}>
-                    <button className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      마이페이지
-                    </button>
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    마이페이지
                   </Link>
                   <button
                     onClick={() => {
@@ -119,15 +130,19 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                    <button className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md">
-                      로그인
-                    </button>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-left text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md"
+                  >
+                    로그인
                   </Link>
-                  <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
-                    <button className="w-full text-left bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md">
-                      회원가입
-                    </button>
+                  <Link
+                    href="/signup"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-left bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md"
+                  >
+                    회원가입
                   </Link>
                 </>
               )}

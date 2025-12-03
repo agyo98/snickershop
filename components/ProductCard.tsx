@@ -33,9 +33,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const displayImageUrl = imageError ? '/placeholder-sneaker.svg' : imageUrl;
 
   return (
-    <Link
-      href={`/product/${product.id}`}
-      className="group block"
+    <div
+      className="group block relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -50,33 +49,42 @@ export default function ProductCard({ product }: ProductCardProps) {
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             onError={() => setImageError(true)}
           />
-          
+
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
+
           {/* New Badge */}
           {product.isNew && (
-            <span className="absolute top-3 left-3 px-3 py-1 text-xs font-bold uppercase tracking-wider bg-blue-600 text-white rounded-full">
+            <span className="absolute top-3 left-3 px-3 py-1 text-xs font-bold uppercase tracking-wider bg-blue-600 text-white rounded-full z-10">
               NEW
             </span>
           )}
-          
-          {/* Like Button */}
+
+          {/* Like Button - Outside of Link */}
           <button
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setIsLiked(!isLiked);
             }}
-            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center border border-gray-200 hover:border-blue-500/50 transition-all duration-300"
+            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center border border-gray-200 hover:border-blue-500/50 transition-all duration-300 z-20"
           >
             <Heart
               className={`w-5 h-5 transition-colors ${isLiked ? 'fill-blue-600 text-blue-600' : 'text-gray-700'}`}
             />
           </button>
+
+          {/* Link Overlay */}
+          <Link
+            href={`/product/${product.id}`}
+            className="absolute inset-0 z-0"
+          >
+            <span className="sr-only">View product</span>
+          </Link>
         </div>
 
         {/* Product Info */}
-        <div className="p-4">
+        <div className="p-4 relative pointer-events-none">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
             {product.brand}
           </p>
@@ -88,7 +96,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </p>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 

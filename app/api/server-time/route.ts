@@ -5,8 +5,17 @@ import { NextResponse } from 'next/server';
 const SERVER_START_TIME = Date.now().toString();
 
 export async function GET() {
-  return NextResponse.json({
-    serverStartTime: SERVER_START_TIME,
-  });
+  try {
+    console.log('[server-time] API called, returning:', SERVER_START_TIME);
+    return NextResponse.json({
+      serverStartTime: SERVER_START_TIME,
+    });
+  } catch (error) {
+    console.error('[server-time] Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }
 

@@ -10,7 +10,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[128px] animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px] animate-pulse" style={{ animationDelay: '1s' }} />
-      
+
       {/* Grid Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="w-full h-full" style={{
@@ -42,16 +42,18 @@ export default function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <Link href="/">
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold tracking-wide uppercase px-10 py-4 rounded-lg hover:shadow-lg transition-all min-w-[200px] flex items-center justify-center gap-2">
-                쇼핑 시작하기
-                <ArrowRight className="w-5 h-5" />
-              </button>
+            <Link
+              href="/"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold tracking-wide uppercase px-10 py-4 rounded-lg hover:shadow-lg transition-all min-w-[200px] flex items-center justify-center gap-2"
+            >
+              쇼핑 시작하기
+              <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="/signup">
-              <button className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-10 py-4 rounded-lg hover:bg-white/20 transition-all min-w-[200px]">
-                회원가입
-              </button>
+            <Link
+              href="/signup"
+              className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-10 py-4 rounded-lg hover:bg-white/20 transition-all min-w-[200px] flex items-center justify-center"
+            >
+              회원가입
             </Link>
           </div>
 

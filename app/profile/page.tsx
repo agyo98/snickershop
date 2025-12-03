@@ -22,7 +22,7 @@ export default function ProfilePage() {
 
       try {
         const supabase = createClient();
-        
+
         // 주문 내역 가져오기
         const { data: ordersData, error } = await supabase
           .from('orders')
@@ -63,10 +63,10 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">마이페이지</h1>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 프로필 정보 */}
           <div className="lg:col-span-1">
@@ -80,7 +80,7 @@ export default function ProfilePage() {
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">{user.email}</p>
               </div>
-              
+
               <div className="space-y-2">
                 <button
                   onClick={() => router.push('/cart')}
@@ -104,7 +104,7 @@ export default function ProfilePage() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">주문 내역</h2>
-              
+
               {orders.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -125,23 +125,22 @@ export default function ProfilePage() {
                           </p>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            order.status === 'DONE'
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${order.status === 'DONE'
                               ? 'bg-green-100 text-green-800'
                               : order.status === 'IN_PROGRESS'
-                              ? 'bg-blue-100 text-blue-800'
-                              : order.status === 'CANCELED'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
+                                ? 'bg-blue-100 text-blue-800'
+                                : order.status === 'CANCELED'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                            }`}
                         >
                           {order.status === 'DONE'
                             ? '완료'
                             : order.status === 'IN_PROGRESS'
-                            ? '진행중'
-                            : order.status === 'CANCELED'
-                            ? '취소됨'
-                            : '준비중'}
+                              ? '진행중'
+                              : order.status === 'CANCELED'
+                                ? '취소됨'
+                                : '준비중'}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-4">
@@ -150,7 +149,7 @@ export default function ProfilePage() {
                         </p>
                         {order.status === 'DONE' && (
                           <button
-                            onClick={() => router.push(`/payment/success?orderId=${order.order_no}`)}
+                            onClick={() => router.push(`/order/${order.order_no}`)}
                             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                           >
                             상세보기

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Package, ArrowRight, Copy } from 'lucide-react';
@@ -18,13 +18,24 @@ function PaymentSuccessContent() {
   const paymentKey = searchParams.get('paymentKey');
   const amount = searchParams.get('amount');
 
+  // Prevent duplicate API calls
+  const confirmationAttempted = useRef(false);
+
   useEffect(() => {
     const confirmPayment = async () => {
+      // Prevent duplicate calls
+      if (confirmationAttempted.current) {
+        return;
+      }
+
       if (!orderId || !paymentKey || !amount) {
         setError('결제 정보가 올바르지 않습니다.');
         setLoading(false);
         return;
       }
+
+      // Mark that we're attempting confirmation
+      confirmationAttempted.current = true;
 
       try {
         // 결제 승인 API 호출
@@ -48,18 +59,45 @@ function PaymentSuccessContent() {
         const data = await response.json();
         setOrderData(data);
 
-        // 장바구니 비우기
+        // 장바구니에서 구매한 아이템만 제거
         const supabase = createClient();
         const userId = user?.id || localStorage.getItem('temp_user_id');
-        
-        if (userId) {
-          const { error: deleteError } = await supabase
-            .from('cart_sneaker')
-            .delete()
-            .eq('user_id', userId);
 
-          if (deleteError) {
-            console.error('Error clearing cart:', deleteError);
+        if (userId) {
+          // 이 주문에 포함된 order_items 조회
+          const { data: orderItems, error: fetchError } = await supabase
+            .from('order_items')
+            .select('cart_item_id')
+            .eq('order_id', data.order?.id || orderId)
+            .not('cart_item_id', 'is', null); // cart_item_id가 NULL이 아닌 것만 (장바구니 구매)
+
+          if (fetchError) {
+            console.error('Error fetching order items:', fetchError);
+          } else if (orderItems && orderItems.length > 0) {
+            // 장바구니 아이템 ID 목록 추출
+            const cartItemIds = orderItems
+              .map(item => item.cart_item_id)
+              .filter(id => id !== null);
+
+            if (cartItemIds.length > 0) {
+              // 해당 장바구니 아이템들만 삭제
+              const { error: deleteError } = await supabase
+                .from('cart_sneaker')
+                .delete()
+                .in('id', cartItemIds);
+
+              if (deleteError) {
+                console.error('Error clearing cart items:', deleteError);
+              } else {
+                // 장바구니 업데이트 이벤트 발생 및 라우터 갱신
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('cartUpdated'));
+                }
+                router.refresh();
+              }
+            }
+          } else {
+            console.log('No cart items found to delete for this order');
           }
         }
 

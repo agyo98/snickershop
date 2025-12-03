@@ -45,16 +45,16 @@
 
 ## Phase 5: 결제 시스템 연동 (Toss Payments)
 
-- [ ] **[Cursor]** **(NEW)** 토스 페이먼츠 SDK 설치
+- [x] **[Cursor]** **(NEW)** 토스 페이먼츠 SDK 설치
     - `npm install @tosspayments/payment-widget-sdk`
-- [ ] **[Cursor]** **(NEW)** 환경 변수 추가 (`.env.local`)
+- [x] **[Cursor]** **(NEW)** 환경 변수 추가 (`.env.local`)
     - `NEXT_PUBLIC_TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY`
-- [ ] **[Cursor]** **(NEW)** 결제 페이지(`app/checkout/page.tsx`) 구현
+- [x] **[Cursor]** **(NEW)** 결제 페이지(`app/checkout/page.tsx`) 구현
     - 토스 결제 위젯 렌더링
     - '결제하기' 버튼 클릭 시 `requestPayment` 호출 (주문번호 생성 로직 포함)
-- [ ] **[Cursor]** **(NEW)** 결제 승인 API Route 구현 (`app/api/confirm/route.ts`)
+- [x] **[Cursor]** **(NEW)** 결제 승인 API Route 구현 (`app/api/confirm/route.ts`)
     - 클라이언트가 아닌 **서버 사이드**에서 토스 API로 결제 승인 요청 보내기 (보안 필수)
     - 승인 성공 시 Supabase `orders` 테이블 상태를 'DONE'으로 업데이트
-- [ ] **[Cursor]** **(NEW)** 결제 성공(`app/payment/success`) 및 실패(`fail`) 페이지 로직
+- [x] **[Cursor]** **(NEW)** 결제 성공(`app/payment/success`) 및 실패(`fail`) 페이지 로직
     - 성공 페이지 로드 시 위에서 만든 API Route 호출하여 최종 승인 처리
     - 처리 완료 후 장바구니(`cart`) 비우기 로직 실행

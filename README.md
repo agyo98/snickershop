@@ -15,11 +15,18 @@ npm install
 `.env.local` 파일을 생성하고 다음 내용을 추가하세요:
 
 ```env
+# Supabase 환경 변수
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_publishable_key
+
+# 토스 페이먼츠 환경 변수
+NEXT_PUBLIC_TOSS_CLIENT_KEY=your_toss_client_key
+TOSS_SECRET_KEY=your_toss_secret_key
 ```
 
-Supabase 프로젝트의 URL과 Publishable Key는 Supabase 대시보드의 Settings > API에서 확인할 수 있습니다.
+- **Supabase**: Supabase 대시보드의 Settings > API에서 확인할 수 있습니다.
+- **토스 페이먼츠**: 토스 페이먼츠 대시보드(https://dashboard.tosspayments.com)에서 확인할 수 있습니다.
+  - Client Key는 클라이언트 사이드에서 사용되며, Secret Key는 서버 사이드에서만 사용됩니다.
 
 ### 3. 개발 서버 실행
 

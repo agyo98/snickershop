@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { PaymentWidgetInstance, loadPaymentWidget } from '@tosspayments/payment-widget-sdk';
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/app/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -13,15 +12,36 @@ interface CartItemData extends CartItem {
   products_sneaker: Product;
 }
 
+// Toss Payments V2 SDK 타입 정의
+declare global {
+  interface Window {
+    TossPayments: (clientKey: string) => {
+      payment: (params: { customerKey: string }) => {
+        requestPayment: (params: {
+          method: string;
+          amount: {
+            currency: string;
+            value: number;
+          };
+          orderId: string;
+          orderName: string;
+          successUrl: string;
+          failUrl: string;
+          customerEmail?: string;
+          customerName?: string;
+          customerMobilePhone?: string;
+        }) => Promise<void>;
+      };
+    };
+  }
+}
+
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [cartItems, setCartItems] = useState<CartItemData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [paymentWidget, setPaymentWidget] = useState<PaymentWidgetInstance | null>(null);
-  const [paymentMethodsWidget, setPaymentMethodsWidget] = useState<any>(null);
-  const [isWidgetReady, setIsWidgetReady] = useState(false);
   const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({});
   const [deliveryInfo, setDeliveryInfo] = useState({
     name: '',
@@ -30,14 +50,14 @@ function CheckoutContent() {
     detailAddress: '',
     zipCode: '',
   });
-  const widgetRef = useRef<HTMLDivElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchCart = async () => {
       try {
         const supabase = createClient();
         const userId = user?.id || localStorage.getItem('temp_user_id');
-        
+
         if (!userId) {
           router.push('/login');
           return;
@@ -86,7 +106,7 @@ function CheckoutContent() {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        
+
         if (!data || data.length === 0) {
           router.push('/cart');
           return;
@@ -103,59 +123,6 @@ function CheckoutContent() {
     fetchCart();
   }, [user, router, searchParams]);
 
-  useEffect(() => {
-    if (!widgetRef.current || cartItems.length === 0) return;
-
-    const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-    if (!clientKey) {
-      console.error('Toss Payments client key is not set');
-      return;
-    }
-
-    const initPaymentWidget = async () => {
-      try {
-        setIsWidgetReady(false);
-        const customerKey = user?.id || localStorage.getItem('temp_user_id') || 'guest';
-        const total = cartItems.reduce((sum, item) => {
-          const product = item.products_sneaker as Product;
-          return sum + (product?.price || 0) * item.quantity;
-        }, 0);
-        
-        const paymentWidget = await loadPaymentWidget(clientKey, customerKey);
-        const paymentMethodsWidget = paymentWidget.renderPaymentMethods(
-          '#payment-widget',
-          { value: total },
-          { variantKey: 'DEFAULT' }
-        );
-
-        // 위젯 렌더링 완료 이벤트 리스너 추가
-        paymentMethodsWidget.on('ready', () => {
-          setIsWidgetReady(true);
-        });
-
-        setPaymentWidget(paymentWidget);
-        setPaymentMethodsWidget(paymentMethodsWidget);
-      } catch (error) {
-        console.error('Error initializing payment widget:', error);
-        setIsWidgetReady(false);
-      }
-    };
-
-    initPaymentWidget();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartItems.length, user]);
-
-  // 결제 위젯 금액 업데이트
-  useEffect(() => {
-    if (paymentMethodsWidget && cartItems.length > 0) {
-      const total = cartItems.reduce((sum, item) => {
-        const product = item.products_sneaker as Product;
-        return sum + (product?.price || 0) * item.quantity;
-      }, 0);
-      paymentMethodsWidget.updateAmount(total);
-    }
-  }, [cartItems, paymentMethodsWidget]);
-
   const calculateTotal = () => {
     return cartItems.reduce((sum, item) => {
       const product = item.products_sneaker as Product;
@@ -164,21 +131,14 @@ function CheckoutContent() {
   };
 
   const handlePayment = async () => {
-    if (!paymentWidget || !paymentMethodsWidget) {
-      alert('결제 위젯이 준비되지 않았습니다.');
-      return;
-    }
-
-    if (!isWidgetReady) {
-      alert('결제 UI가 아직 렌더링되지 않았습니다. 결제 UI가 완전히 렌더링 된 후에 다시 시도해주세요.');
-      return;
-    }
-
     // 배송지 정보 검증
     if (!deliveryInfo.name || !deliveryInfo.phone || !deliveryInfo.address || !deliveryInfo.zipCode) {
       alert('배송지 정보를 모두 입력해주세요.');
       return;
     }
+
+    if (isProcessing) return;
+    setIsProcessing(true);
 
     try {
       const supabase = createClient();
@@ -202,21 +162,62 @@ function CheckoutContent() {
 
       if (orderError) throw orderError;
 
-      // 결제 요청
-      await paymentWidget.requestPayment({
+      // 바로구매인지 장바구니 구매인지 확인
+      const isDirectPurchase = searchParams.get('productId') !== null;
+
+      // 주문 아이템 저장
+      const orderItems = cartItems.map(item => ({
+        order_id: order.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        size: item.size,
+        price: item.products_sneaker.price,
+        // 바로구매면 NULL, 장바구니 구매면 cart_item_id 저장
+        cart_item_id: isDirectPurchase ? null : item.id,
+      }));
+
+      const { error: orderItemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (orderItemsError) {
+        console.error('Error creating order items:', orderItemsError);
+        throw new Error('주문 아이템 저장에 실패했습니다.');
+      }
+
+      // Toss Payments V2 SDK 초기화
+      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+      if (!clientKey) {
+        throw new Error('Toss Payments client key is not set');
+      }
+
+      const customerKey = userId || 'guest';
+
+      // V2 SDK 사용 - payment() 메서드로 결제창 객체 생성
+      const tossPayments = window.TossPayments(clientKey);
+      const paymentInstance = tossPayments.payment({ customerKey });
+
+      // 결제창 열기
+      await paymentInstance.requestPayment({
+        method: 'CARD', // 카드 결제
+        amount: {
+          currency: 'KRW',
+          value: totalAmount,
+        },
         orderId: orderNo,
-        orderName: cartItems.length === 1 
-          ? cartItems[0].products_sneaker.name 
+        orderName: cartItems.length === 1
+          ? cartItems[0].products_sneaker.name
           : `${cartItems[0].products_sneaker.name} 외 ${cartItems.length - 1}개`,
         successUrl: `${window.location.origin}/payment/success?orderId=${orderNo}`,
         failUrl: `${window.location.origin}/payment/fail?orderId=${orderNo}`,
         customerEmail: user?.email || undefined,
         customerName: deliveryInfo.name,
-        customerMobilePhone: deliveryInfo.phone,
+        customerMobilePhone: deliveryInfo.phone.replace(/-/g, ''),
       });
     } catch (error: any) {
       console.error('Payment error:', error);
       alert(`결제 요청 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
+      setIsProcessing(false);
     }
   };
 
@@ -238,10 +239,10 @@ function CheckoutContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">결제하기</h1>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 배송지 정보 및 주문 상품 요약 */}
           <div className="lg:col-span-2 space-y-6">
@@ -323,8 +324,8 @@ function CheckoutContent() {
               <div className="space-y-4">
                 {cartItems.map((item) => {
                   const product = item.products_sneaker as Product;
-                  const imageUrl = imageErrors[item.id] 
-                    ? '/placeholder-sneaker.svg' 
+                  const imageUrl = imageErrors[item.id]
+                    ? '/placeholder-sneaker.svg'
                     : (product.image_url || '/placeholder-sneaker.svg');
                   return (
                     <div key={item.id} className="flex items-center gap-4 pb-4 border-b border-gray-200 last:border-0">
@@ -354,11 +355,11 @@ function CheckoutContent() {
             </div>
           </div>
 
-          {/* 결제 위젯 및 총액 */}
+          {/* 결제 정보 및 버튼 */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
               <h2 className="text-xl font-semibold mb-4">결제 정보</h2>
-              
+
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">상품 금액</span>
@@ -378,15 +379,12 @@ function CheckoutContent() {
                 </div>
               </div>
 
-              {/* 토스 페이먼츠 위젯 */}
-              <div id="payment-widget" ref={widgetRef} className="mb-6"></div>
-
               <button
                 onClick={handlePayment}
-                disabled={!isWidgetReady || !paymentWidget || !paymentMethodsWidget}
+                disabled={isProcessing}
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                {!isWidgetReady ? '결제 UI 로딩 중...' : '결제하기'}
+                {isProcessing ? '처리 중...' : '결제하기'}
               </button>
             </div>
           </div>
@@ -412,4 +410,3 @@ export default function CheckoutPage() {
     </Suspense>
   );
 }
-

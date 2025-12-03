@@ -51,13 +51,15 @@ export async function POST(request: NextRequest) {
 
     // Supabase에서 주문 정보 업데이트
     const supabase = await createClient();
-    const { error: updateError } = await supabase
+    const { data: order, error: updateError } = await supabase
       .from('orders')
       .update({
         status: 'DONE',
         payment_key: paymentKey,
       })
-      .eq('order_no', orderId);
+      .eq('order_no', orderId)
+      .select()
+      .single();
 
     if (updateError) {
       console.error('Error updating order:', updateError);
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId,
+      order,
       paymentData,
     });
   } catch (error: any) {
