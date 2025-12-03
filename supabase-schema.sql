@@ -28,10 +28,8 @@ CREATE TABLE IF NOT EXISTS public.cart_sneaker (
   product_id UUID NOT NULL REFERENCES public.products_sneaker(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL DEFAULT 1,
   size TEXT,
-  session_id TEXT,
-  expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, product_id, size, session_id)
+  UNIQUE(user_id, product_id, size)
 );
 
 -- ============================================
@@ -143,23 +141,9 @@ CREATE POLICY "Users can update own orders"
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_cart_sneaker_user_id ON public.cart_sneaker(user_id);
 CREATE INDEX IF NOT EXISTS idx_cart_sneaker_product_id ON public.cart_sneaker(product_id);
-CREATE INDEX IF NOT EXISTS idx_cart_sneaker_session_id ON public.cart_sneaker(session_id);
-CREATE INDEX IF NOT EXISTS idx_cart_sneaker_user_session ON public.cart_sneaker(user_id, session_id);
 CREATE INDEX IF NOT EXISTS idx_products_sneaker_category ON public.products_sneaker(category);
 CREATE INDEX IF NOT EXISTS idx_profiles_status ON public.profiles(status);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_order_no ON public.orders(order_no);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
-
--- ============================================
--- 9. 만료된 세션 데이터 자동 삭제 함수
--- ============================================
-CREATE OR REPLACE FUNCTION public.cleanup_expired_cart_sessions()
-RETURNS void AS $$
-BEGIN
-  DELETE FROM public.cart_sneaker
-  WHERE expires_at IS NOT NULL 
-    AND expires_at < NOW();
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
 

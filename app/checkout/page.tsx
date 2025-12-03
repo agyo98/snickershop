@@ -8,7 +8,6 @@ import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/app/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import type { Product, CartItem } from '@/types/product.types';
-import { getSessionId } from '@/utils/session';
 
 interface CartItemData extends CartItem {
   products_sneaker: Product;
@@ -22,6 +21,7 @@ function CheckoutContent() {
   const [loading, setLoading] = useState(true);
   const [paymentWidget, setPaymentWidget] = useState<PaymentWidgetInstance | null>(null);
   const [paymentMethodsWidget, setPaymentMethodsWidget] = useState<any>(null);
+  const [isWidgetReady, setIsWidgetReady] = useState(false);
   const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({});
   const [deliveryInfo, setDeliveryInfo] = useState({
     name: '',
@@ -76,24 +76,14 @@ function CheckoutContent() {
         }
 
         // 일반 장바구니에서 가져오기
-        const sessionId = getSessionId();
-        
-        let query = supabase
+        const { data, error } = await supabase
           .from('cart_sneaker')
           .select(`
             *,
             products_sneaker (*)
           `)
-          .eq('user_id', userId);
-
-        // session_id가 있으면 필터링, 없으면 null인 데이터도 조회 (하위 호환성)
-        if (sessionId) {
-          query = query.or(`session_id.is.null,session_id.eq.${sessionId}`);
-        } else {
-          query = query.is('session_id', null);
-        }
-
-        const { data, error } = await query.order('created_at', { ascending: false });
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
         
@@ -124,6 +114,7 @@ function CheckoutContent() {
 
     const initPaymentWidget = async () => {
       try {
+        setIsWidgetReady(false);
         const customerKey = user?.id || localStorage.getItem('temp_user_id') || 'guest';
         const total = cartItems.reduce((sum, item) => {
           const product = item.products_sneaker as Product;
@@ -137,10 +128,16 @@ function CheckoutContent() {
           { variantKey: 'DEFAULT' }
         );
 
+        // 위젯 렌더링 완료 이벤트 리스너 추가
+        paymentMethodsWidget.on('ready', () => {
+          setIsWidgetReady(true);
+        });
+
         setPaymentWidget(paymentWidget);
         setPaymentMethodsWidget(paymentMethodsWidget);
       } catch (error) {
         console.error('Error initializing payment widget:', error);
+        setIsWidgetReady(false);
       }
     };
 
@@ -169,6 +166,11 @@ function CheckoutContent() {
   const handlePayment = async () => {
     if (!paymentWidget || !paymentMethodsWidget) {
       alert('결제 위젯이 준비되지 않았습니다.');
+      return;
+    }
+
+    if (!isWidgetReady) {
+      alert('결제 UI가 아직 렌더링되지 않았습니다. 결제 UI가 완전히 렌더링 된 후에 다시 시도해주세요.');
       return;
     }
 
@@ -381,9 +383,10 @@ function CheckoutContent() {
 
               <button
                 onClick={handlePayment}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors"
+                disabled={!isWidgetReady || !paymentWidget || !paymentMethodsWidget}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                결제하기
+                {!isWidgetReady ? '결제 UI 로딩 중...' : '결제하기'}
               </button>
             </div>
           </div>

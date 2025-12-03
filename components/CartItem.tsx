@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { getSessionId } from '@/utils/session';
 
 interface Product {
   id: string;
@@ -37,24 +36,19 @@ export default function CartItem({ cartItem, onUpdate }: CartItemProps) {
     setLoading(true);
     try {
       const supabase = createClient();
-      const sessionId = getSessionId();
-      
-      if (!sessionId) return;
 
       if (newQuantity === 0) {
         // 삭제
         await supabase
           .from('cart_sneaker')
           .delete()
-          .eq('id', cartItem.id)
-          .eq('session_id', sessionId);
+          .eq('id', cartItem.id);
       } else {
         // 수량 업데이트
         await supabase
           .from('cart_sneaker')
           .update({ quantity: newQuantity })
-          .eq('id', cartItem.id)
-          .eq('session_id', sessionId);
+          .eq('id', cartItem.id);
       }
       
       setQuantity(newQuantity);

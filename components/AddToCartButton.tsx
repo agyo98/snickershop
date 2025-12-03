@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import { getOrCreateSessionId, getSessionExpiresAt } from '@/utils/session';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface AddToCartButtonProps {
   productId: string;
@@ -14,6 +14,7 @@ interface AddToCartButtonProps {
 export default function AddToCartButton({ productId, size, quantity = 1 }: AddToCartButtonProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const { user } = useAuth();
 
   const handleAddToCart = async () => {
     if (!size) {
@@ -29,24 +30,23 @@ export default function AddToCartButton({ productId, size, quantity = 1 }: AddTo
       const supabase = createClient();
       
       // user_id 가져오기 (로그인 사용자 또는 임시 사용자)
-      const tempUserId = localStorage.getItem('temp_user_id') || crypto.randomUUID();
-      if (!localStorage.getItem('temp_user_id')) {
-        localStorage.setItem('temp_user_id', tempUserId);
+      let userId: string;
+      if (user?.id) {
+        userId = user.id;
+      } else {
+        userId = localStorage.getItem('temp_user_id') || crypto.randomUUID();
+        if (!localStorage.getItem('temp_user_id')) {
+          localStorage.setItem('temp_user_id', userId);
+        }
       }
 
-      // 세션 ID 가져오기 또는 생성
-      const sessionId = getOrCreateSessionId();
-      const expiresAt = getSessionExpiresAt();
-
       // 기존 장바구니에 같은 상품, 사이즈가 있는지 확인
-      // session_id가 null이거나 현재 session_id와 일치하는 경우 (하위 호환성)
       const { data: existingCart } = await supabase
         .from('cart_sneaker')
         .select('*')
-        .eq('user_id', tempUserId)
+        .eq('user_id', userId)
         .eq('product_id', productId)
         .eq('size', size)
-        .or(`session_id.is.null,session_id.eq.${sessionId}`)
         .maybeSingle();
 
       if (existingCart) {
@@ -63,12 +63,10 @@ export default function AddToCartButton({ productId, size, quantity = 1 }: AddTo
         const { error } = await supabase
           .from('cart_sneaker')
           .insert({
-            user_id: tempUserId,
+            user_id: userId,
             product_id: productId,
             size: size,
             quantity: quantity,
-            session_id: sessionId,
-            expires_at: expiresAt?.toISOString() || null,
           });
 
         if (error) throw error;
