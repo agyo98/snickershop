@@ -30,7 +30,7 @@ export default function CartClient() {
   useEffect(() => {
     const fetchCart = async () => {
       // 로그인한 사용자는 user.id 사용, 비로그인 사용자는 temp_user_id 사용
-      let userId = user?.id;
+      let userId: string | null | undefined = user?.id;
       if (!userId) {
         userId = localStorage.getItem('temp_user_id');
         if (!userId) {
@@ -41,7 +41,7 @@ export default function CartClient() {
 
       try {
         const supabase = createClient();
-        
+
         // user_id로만 장바구니 조회
         const { data, error } = await supabase
           .from('cart_sneaker')
@@ -81,7 +81,7 @@ export default function CartClient() {
 
     try {
       const supabase = createClient();
-      
+
       // user_id로만 장바구니 조회
       const { data, error } = await supabase
         .from('cart_sneaker')
@@ -129,7 +129,7 @@ export default function CartClient() {
           <CartItem key={item.id} cartItem={item} onUpdate={refreshCart} />
         ))}
       </div>
-      
+
       <div className="mt-8 pt-6 border-t border-gray-200">
         <div className="space-y-3 mb-6">
           <div className="flex justify-between items-center">

@@ -110,7 +110,7 @@ function PaymentSuccessContent() {
     };
 
     confirmPayment();
-  }, [orderId, paymentKey, amount, user]);
+  }, [orderId, paymentKey, amount, user, router]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ko-KR').format(price);
