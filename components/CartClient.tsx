@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/app/contexts/AuthContext';
 import CartItem from '@/components/CartItem';
-import { getOrCreateSessionId, getSessionId, cleanupSessionCart } from '@/utils/session';
+import { getOrCreateSessionId, getSessionId, getSessionExpiresAt, cleanupSessionCart } from '@/utils/session';
 
 interface Product {
   id: string;
